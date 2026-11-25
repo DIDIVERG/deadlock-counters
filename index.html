@@ -32,6 +32,17 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .hc img{width:64px;height:64px;border-radius:8px;display:block}
 .hc[aria-pressed=true]{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
 .hc:hover{border-color:#4a5640}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.flt{display:flex;gap:6px;flex-wrap:wrap}
+.flt button{font:600 14px Inter,sans-serif;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:99px;padding:8px 14px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.flt button[aria-pressed=true]{border-color:var(--acc);color:var(--acc)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.dg{background:var(--w)}.ds{background:var(--s)}
+.bd{display:flex;gap:3px;justify-content:center;flex-wrap:wrap}
+.b{font:600 10.5px/1 Inter,sans-serif;padding:3px 6px;border-radius:99px;letter-spacing:.01em}
+.bg{background:color-mix(in srgb,var(--w) 24%,transparent);color:#f0a95a}
+.bs{background:color-mix(in srgb,var(--s) 28%,transparent);color:#c3a2f5}
+.dhead .bd{justify-content:flex-start;margin:6px 0 4px}
+.dhead .b{font-size:12px}
 #pop{position:fixed;z-index:40;width:min(430px,calc(100vw - 16px));max-height:min(80vh,720px);overflow:auto;background:var(--panel);border:1px solid #46523b;border-radius:14px;padding:18px;box-shadow:0 18px 50px #000c;opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .12s,transform .12s,visibility 0s .12s}
 #pop.on{opacity:1;visibility:visible;transform:none;transition:opacity .12s,transform .12s}
 #pop.pinned{border-color:var(--acc)}
@@ -81,14 +92,15 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 
   <section id="v-heroes">
     <div class="hero-view">
-      <input class="search" id="q" type="search" placeholder="Найти героя…" aria-label="Поиск героя">
+      <div class="tools"><input class="search" id="q" type="search" placeholder="Найти героя…" aria-label="Поиск героя">
+      <div class="flt" role="group" aria-label="Фильтр по типу урона"><button data-f="all" aria-pressed="true">Все</button><button data-f="g" aria-pressed="false"><span class="dot dg"></span>Ган</button><button data-f="s" aria-pressed="false"><span class="dot ds"></span>Спирит</button><button data-f="gs" aria-pressed="false">Гибриды</button></div></div>
       <div class="grid" id="grid"></div>
     </div>
   </section>
 
   <section id="v-items" hidden></section>
 
-  <p class="note">Названия предметов приведены по текущей версии игры. В ролике «Дебафф ремувер» — это <b>Dispel Magic</b>, «Курса» — <b>Cursed Relic</b>, «ДК» — <b>Decay</b>, «токсики» — <b>Toxic Bullets</b>. Цифры в описаниях взяты с deadlock.wiki на ноябрь 2026 и могут поменяться с патчами.</p>
+  <p class="note">Названия предметов приведены по текущей версии игры. В ролике «Дебафф ремувер» — это <b>Dispel Magic</b>, «Курса» — <b>Cursed Relic</b>, «ДК» — <b>Decay</b>, «токсики» — <b>Toxic Bullets</b>. Метки «Ган» и «Спирит» показывают основной упор героя; у гибридов стоят обе, и всё равно смотри на конкретную сборку врага. Цифры в описаниях взяты с deadlock.wiki на ноябрь 2026 и могут поменяться с патчами.</p>
 </div>
 <div id="pop" role="dialog" aria-label="Карточка героя"></div>
 <div id="shade"></div>
@@ -184,6 +196,9 @@ const HE=[
  {h:"wraith",n:"Рейт",t:"Сильный дуэлянт, у неё всегда есть ремувер: бери по нескольку хексов и координируйся.",i:[["counterspell","против ульты"],["divine_barrier","снимает ульту, даёт ХП"],["slowing_hex","бери несколько на команду"]]},
  {h:"yamato",n:"Ямато",t:"В ульте ей плевать на всё. Переживи урон, а когда ульта кончится, убей её.",i:[["spirit_resilience","пережить её ульту"]]}
 ];
+const DMG={abrams:"gs",apollo:"g",baba:"s",bebop:"gs",billy:"g",calico:"s",celeste:"s",deadman_danny:"gs",the_doorman:"s",drifter:"gs",dynamo:"s",graves:"gs",grey_talon:"gs",haze:"g",holliday:"g",infernus:"s",ivy:"gs",kelvin:"s",lady_geist:"gs",lash:"s",mcginnis:"g",mina:"s",mirage:"gs",mo_krill:"s",nurse_harrow:"s",paige:"s",paradox:"s",pocket:"s",rat_king:"g",rem:"s",seven:"gs",shiv:"g",silver:"g",sinclair:"s",solomon:"s",venator:"g",victor:"s",vindicta:"g",violet:"s",viscous:"s",vyper:"g",warden:"gs",wraith:"gs",yamato:"gs"};
+const badges=d=>`<span class="bd">${d.includes('g')?'<span class="b bg">Ган</span>':''}${d.includes('s')?'<span class="b bs">Спирит</span>':''}</span>`;
+let flt='all';
 const by={};HE.forEach(h=>h.i.forEach(([k])=>(by[k]=by[k]||[]).push(h)));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const icon=(k,cls="")=>`<img class="ic k-${IT[k].k} ${cls}" src="img/i_${k}.webp" alt="${esc(IT[k].n)}" data-i="${k}" tabindex="0" width="48" height="48">`;
@@ -191,8 +206,8 @@ const fmt=c=>c.toLocaleString('ru-RU');
 const grid=document.getElementById('grid'),q=document.getElementById('q'),pop=document.getElementById('pop'),shade=document.getElementById('shade');
 const hover=matchMedia('(hover:hover) and (pointer:fine)');
 let shown=-1,pinned=false,anchor=null,tShow=0,tHide=0;
-function renderGrid(){const f=q.value.trim().toLowerCase();grid.innerHTML=HE.map((h,i)=>({h,i})).filter(({h})=>!f||h.n.toLowerCase().includes(f)||h.h.includes(f)).map(({h,i})=>`<button class="hc" data-h="${i}" aria-pressed="${pinned&&i===shown}" aria-haspopup="dialog"><img src="img/h_${h.h}.webp" alt="" width="64" height="64">${esc(h.n)}</button>`).join('')||'<p class="small">Никого не нашёл.</p>'}
-function card(i){const h=HE[i];const nw=h.i.length;return `<button class="x" aria-label="Закрыть">×</button><div class="dhead"><img src="img/h_${h.h}.webp" alt="" width="88" height="88"><div><h2>${esc(h.n)}</h2><span class="small">${nw} ${nw===1?'предмет':nw<5?'предмета':'предметов'} против</span></div></div><div class="tip"><p>${esc(h.t)}</p></div><div class="ilist">${h.i.map(([k,w])=>`<div class="irow">${icon(k)}<div><b>${esc(IT[k].n)}</b> <span class="cost">${fmt(IT[k].c)}</span><span class="why">${esc(w)}</span></div></div>`).join('')}</div>`}
+function renderGrid(){const f=q.value.trim().toLowerCase();grid.innerHTML=HE.map((h,i)=>({h,i})).filter(({h})=>(!f||h.n.toLowerCase().includes(f)||h.h.includes(f))&&(flt==='all'||(flt==='gs'?DMG[h.h]==='gs':DMG[h.h]===flt))).map(({h,i})=>`<button class="hc" data-h="${i}" aria-pressed="${pinned&&i===shown}" aria-haspopup="dialog"><img src="img/h_${h.h}.webp" alt="" width="64" height="64">${esc(h.n)}${badges(DMG[h.h])}</button>`).join('')||'<p class="small">Никого не нашёл.</p>'}
+function card(i){const h=HE[i];const nw=h.i.length;return `<button class="x" aria-label="Закрыть">×</button><div class="dhead"><img src="img/h_${h.h}.webp" alt="" width="88" height="88"><div><h2>${esc(h.n)}</h2>${badges(DMG[h.h])}<span class="small">${nw} ${nw===1?'предмет':nw<5?'предмета':'предметов'} против</span></div></div><div class="tip"><p>${esc(h.t)}</p></div><div class="ilist">${h.i.map(([k,w])=>`<div class="irow">${icon(k)}<div><b>${esc(IT[k].n)}</b> <span class="cost">${fmt(IT[k].c)}</span><span class="why">${esc(w)}</span></div></div>`).join('')}</div>`}
 function place(){if(!anchor||innerWidth<=600){pop.style.left='';pop.style.top='';return}const r=anchor.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;let x=r.right+12;if(x+w>innerWidth-8)x=r.left-w-12;if(x<8)x=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));let y=r.top+r.height/2-h/2;y=Math.max(8,Math.min(innerHeight-h-8,y));pop.style.left=x+'px';pop.style.top=y+'px'}
 function open(i,el,pin){clearTimeout(tShow);clearTimeout(tHide);if(shown!==i){pop.innerHTML=card(i);pop.scrollTop=0}shown=i;anchor=el;pinned=pin;pop.classList.toggle('pinned',pin);shade.classList.toggle('on',pin&&innerWidth<=600);pop.classList.add('on');place();syncPressed();if(pin)pop.querySelector('.x').focus({preventScroll:true})}
 function close(){clearTimeout(tShow);clearTimeout(tHide);pop.classList.remove('on','pinned');shade.classList.remove('on');pinned=false;shown=-1;anchor=null;ttHide();syncPressed()}
@@ -201,6 +216,7 @@ function heroOf(el){const b=el.closest('[data-h],[data-go]');return b?[+(b.datas
 function renderItems(){document.getElementById('v-items').innerHTML=GR.map(g=>`<div class="group"><h2>${esc(g.t)}</h2><p>${esc(g.p)}</p>${g.i.map(k=>{const it=IT[k],hs=by[k]||[];return `<div class="icard k-${it.k}">${icon(k)}<div><div class="meta"><h3>${esc(it.n)}</h3><span class="tag">${KN[it.k]}</span><span class="cost">${fmt(it.c)} душ</span><span class="small">в ролике: «${esc(it.a)}»</span></div><p class="desc">${esc(it.d)}</p><div class="vs"><span class="small">Против:</span>${hs.map(h=>`<button data-go="${HE.indexOf(h)}" title="${esc(h.n)}" aria-label="${esc(h.n)}" aria-haspopup="dialog"><img src="img/h_${h.h}.webp" alt="" width="34" height="34"></button>`).join('')}</div></div></div>`}).join('')}</div>`).join('')}
 function tab(v){close();const isH=v==='heroes';document.getElementById('v-heroes').hidden=!isH;document.getElementById('v-items').hidden=isH;document.getElementById('tab-heroes').setAttribute('aria-selected',isH);document.getElementById('tab-items').setAttribute('aria-selected',!isH);if(location.hash!=='#'+v)history.replaceState(null,'','#'+v)}
 q.addEventListener('input',()=>{close();renderGrid()});
+document.querySelector('.flt').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;flt=b.dataset.f;document.querySelectorAll('.flt [data-f]').forEach(x=>x.setAttribute('aria-pressed',x===b));close();renderGrid()});
 document.getElementById('tab-heroes').onclick=()=>tab('heroes');
 document.getElementById('tab-items').onclick=()=>tab('items');
 // всплывающая подсказка предмета
